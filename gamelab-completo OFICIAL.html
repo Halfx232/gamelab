@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAMELAB — Jogos Clássicos Online</title>
+<meta name="description" content="Jogue jogos clássicos online grátis: Snake, Tetris, Pong, Space Invaders, Memory e Dino Runner. Sem download, direto no navegador!">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07070f;
+  --bg2: #0d0d1a;
+  --ng: #00ff41;
+  --nc: #00e5ff;
+  --np: #ff2d78;
+  --ny: #ffe600;
+  --no: #ff6b00;
+  --nw: #ffffff;
+  --dim: #2a3a2a;
+  --dim2: #1a2a1a;
+  --glow-g: 0 0 10px #00ff41, 0 0 30px #00ff4144;
+  --glow-c: 0 0 10px #00e5ff, 0 0 30px #00e5ff44;
+  --glow-p: 0 0 10px #ff2d78, 0 0 30px #ff2d7844;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--ng);font-family:'Share Tech Mono',monospace;min-height:100vh;overflow-x:hidden;cursor:crosshair;}
+
+/* SCANLINES */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);pointer-events:none;z-index:9999;}
+/* GRID */
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,65,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,65,0.03) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;z-index:0;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(7,7,15,0.95);backdrop-filter:blur(10px);border-bottom:1px solid #00ff4120;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px;}
+.nav-logo{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:var(--ng);text-shadow:var(--glow-g);cursor:pointer;letter-spacing:2px;}
+.nav-logo span{color:var(--np);}
+.nav-links{display:flex;gap:4px;align-items:center;}
+.nav-btn{font-family:'VT323',monospace;font-size:15px;letter-spacing:1px;color:#4a6a4a;background:transparent;border:none;padding:6px 10px;cursor:pointer;transition:color 0.2s;white-space:nowrap;}
+.nav-btn:hover,.nav-btn.active{color:var(--nc);}
+.nav-sound{width:32px;height:32px;background:transparent;border:1px solid #1a2a1a;color:#4a6a4a;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;margin-left:8px;}
+.nav-sound:hover,.nav-sound.on{border-color:var(--ng);color:var(--ng);}
+.nav-privacy{color:var(--nc)!important;border:1px solid #0d2a3a!important;padding:5px 12px!important;margin-left:4px;transition:all 0.2s!important;}
+.nav-privacy:hover{background:#00e5ff15!important;border-color:var(--nc)!important;text-shadow:0 0 8px var(--nc);}
+
+/* PAGES */
+.page{display:none;min-height:100vh;padding-top:56px;position:relative;z-index:10;}
+.page.active{display:block;}
+
+/* AD BANNER LEADERBOARD TOP */
+.ad-top{width:100%;display:flex;justify-content:center;align-items:center;padding:8px 0;background:#0a0a14;border-bottom:1px solid #00ff4110;}
+.ad-slot{background:#0d0d1a;border:1px dashed #1a3a1a;display:flex;align-items:center;justify-content:center;font-family:'VT323',monospace;font-size:13px;color:#2a4a2a;letter-spacing:2px;position:relative;overflow:hidden;}
+.ad-slot::before{content:'ANÚNCIO';position:absolute;top:4px;left:8px;font-size:10px;color:#1a3a1a;letter-spacing:3px;}
+.ad-728{width:728px;max-width:100%;height:90px;}
+.ad-300{width:300px;height:250px;}
+.ad-336{width:336px;height:280px;}
+.ad-300x600{width:300px;height:600px;}
+.ad-320{width:320px;max-width:100%;height:100px;}
+
+/* HOME PAGE */
+#home{background:var(--bg);}
+.hero{text-align:center;padding:60px 20px 40px;position:relative;}
+.hero-tag{font-size:12px;letter-spacing:6px;color:var(--nc);opacity:0.6;margin-bottom:12px;text-transform:uppercase;}
+.hero h1{font-family:'Orbitron',sans-serif;font-size:clamp(3rem,10vw,7rem);font-weight:900;color:var(--ng);text-shadow:var(--glow-g);line-height:0.9;animation:flicker 6s infinite;}
+.hero h1 span{color:var(--np);text-shadow:var(--glow-p);}
+.hero-sub{font-family:'VT323',monospace;font-size:22px;color:var(--ny);margin-top:16px;letter-spacing:3px;}
+.hero-stats{display:flex;justify-content:center;gap:40px;margin-top:24px;font-size:11px;color:#4a6a4a;letter-spacing:2px;}
+.hero-stats strong{color:var(--nc);}
+
+@keyframes flicker{0%,94%,96%,100%{opacity:1;}95%{opacity:0.5;}97%{opacity:0.8;}}
+
+/* GAME GRID */
+.games-section{max-width:1200px;margin:0 auto;padding:20px 20px 60px;}
+.section-label{font-size:11px;letter-spacing:5px;color:var(--nc);margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.section-label::before{content:'//';color:var(--np);}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#00e5ff22,transparent);}
+
+.games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
+.game-thumb{background:var(--bg2);border:1px solid #1a2a1a;position:relative;cursor:pointer;overflow:hidden;transition:transform 0.25s,border-color 0.25s;display:flex;flex-direction:column;}
+.game-thumb::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--cc);opacity:0;transition:opacity 0.3s;}
+.game-thumb:hover{transform:translateY(-5px);border-color:var(--cc);box-shadow:0 8px 30px color-mix(in srgb,var(--cc) 15%,transparent);}
+.game-thumb:hover::before{opacity:1;}
+.thumb-preview{aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-size:70px;background:#04040a;position:relative;overflow:hidden;}
+.thumb-preview::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse,color-mix(in srgb,var(--cc) 10%,transparent),transparent 70%);}
+.thumb-body{padding:18px 20px 20px;flex:1;}
+.thumb-tag{font-size:10px;letter-spacing:3px;color:var(--cc);opacity:0.7;text-transform:uppercase;margin-bottom:5px;}
+.thumb-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:#ddeedd;margin-bottom:8px;}
+.thumb-desc{font-size:11px;color:#4a6a4a;line-height:1.6;margin-bottom:14px;}
+.thumb-tech{font-size:10px;color:#2a4a2a;letter-spacing:1px;border-top:1px solid #1a2a1a;padding-top:12px;margin-bottom:14px;}
+.thumb-tech strong{color:#3a6a3a;}
+.thumb-footer{display:flex;justify-content:space-between;align-items:center;}
+.diff-dots{display:flex;gap:3px;}
+.diff-dot{width:7px;height:7px;border-radius:50%;background:#1a2a1a;}
+.diff-dot.on{background:var(--cc);box-shadow:0 0 5px var(--cc);}
+.play-btn{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--cc);background:transparent;border:1px solid var(--cc);padding:6px 16px;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.play-btn:hover{background:var(--cc);color:var(--bg);}
+
+[data-c="g"]{--cc:var(--ng);}
+[data-c="c"]{--cc:var(--nc);}
+[data-c="p"]{--cc:var(--np);}
+[data-c="y"]{--cc:var(--ny);}
+[data-c="o"]{--cc:var(--no);}
+[data-c="w"]{--cc:var(--nw);}
+
+/* HOME SIDEBAR AD LAYOUT */
+.home-content{display:grid;grid-template-columns:1fr 300px;gap:30px;max-width:1200px;margin:0 auto;padding:0 20px;}
+.home-main{}
+.home-sidebar{padding-top:20px;display:flex;flex-direction:column;gap:20px;}
+@media(max-width:900px){.home-content{grid-template-columns:1fr;}.home-sidebar{display:none;}}
+
+/* GAME PAGE */
+.game-page{max-width:1200px;margin:0 auto;padding:20px;}
+.game-layout{display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:start;}
+@media(max-width:900px){.game-layout{grid-template-columns:1fr;}}
+.game-main{}
+.game-sidebar{display:flex;flex-direction:column;gap:20px;}
+
+.game-header{display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+.back-btn{font-family:'VT323',monospace;font-size:16px;color:var(--nc);background:transparent;border:1px solid #1a3a3a;padding:6px 14px;cursor:pointer;letter-spacing:2px;transition:all 0.2s;}
+.back-btn:hover{border-color:var(--nc);background:#00e5ff11;}
+.game-title{font-family:'Orbitron',sans-serif;font-size:clamp(18px,4vw,28px);font-weight:900;color:var(--nw);}
+.game-title span{color:var(--cc);}
+
+.game-canvas-wrap{background:#03030a;border:1px solid #1a2a1a;position:relative;overflow:hidden;}
+.game-canvas-wrap canvas{display:block;width:100%;height:auto;}
+.game-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);gap:12px;}
+.game-overlay h2{font-family:'Orbitron',sans-serif;font-size:clamp(18px,5vw,32px);color:var(--cc);}
+.game-overlay p{font-family:'VT323',monospace;font-size:20px;color:var(--nc);letter-spacing:2px;}
+.start-btn{font-family:'Orbitron',sans-serif;font-size:14px;color:var(--bg);background:var(--cc);border:none;padding:12px 32px;cursor:pointer;letter-spacing:2px;margin-top:8px;transition:opacity 0.2s;}
+.start-btn:hover{opacity:0.85;}
+
+.game-stats{display:flex;gap:0;margin-top:12px;border:1px solid #1a2a1a;}
+.stat-box{flex:1;padding:12px 16px;border-right:1px solid #1a2a1a;text-align:center;}
+.stat-box:last-child{border-right:none;}
+.stat-label{font-size:10px;letter-spacing:2px;color:#3a5a3a;text-transform:uppercase;margin-bottom:4px;}
+.stat-value{font-family:'VT323',monospace;font-size:28px;color:var(--cc);}
+
+/* HOW IT WAS MADE */
+.how-made{background:var(--bg2);border:1px solid #1a2a1a;padding:20px;margin-top:20px;}
+.how-made h3{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--nc);margin-bottom:16px;letter-spacing:2px;}
+.how-step{display:flex;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #0d1a0d;}
+.how-step:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.step-num{font-family:'VT323',monospace;font-size:24px;color:var(--cc);min-width:28px;}
+.step-text{font-size:11px;color:#4a6a4a;line-height:1.7;}
+.step-text strong{color:#8ab88a;}
+.code-chip{display:inline-block;background:#0a1a0a;border:1px solid #1a3a1a;padding:1px 7px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ng);margin:1px;}
+
+/* CONTROLS HINT */
+.controls-hint{background:#04040a;border:1px solid #0d1d0d;padding:14px 16px;margin-top:12px;}
+.controls-hint h4{font-size:10px;letter-spacing:3px;color:#3a5a3a;margin-bottom:10px;text-transform:uppercase;}
+.control-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.control-key{background:#0d0d1a;border:1px solid #1a2a2a;padding:3px 8px;font-size:11px;color:var(--nc);}
+.control-desc{font-size:11px;color:#3a5a3a;}
+
+/* TERMINAL */
+.terminal{background:#02020a;border:1px solid #00ff4115;padding:16px 20px;font-family:'VT323',monospace;font-size:16px;}
+.term-hdr{display:flex;gap:6px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #00ff4110;}
+.term-dot{width:10px;height:10px;border-radius:50%;}
+.term-line{color:#00ff4199;line-height:1.7;}
+.term-line .p{color:var(--np);}
+.term-line .c{color:var(--nc);}
+.blink{display:inline-block;width:8px;height:14px;background:var(--ng);animation:blink 1s step-end infinite;vertical-align:middle;}
+@keyframes blink{50%{opacity:0;}}
+
+/* MOBILE DPAD */
+.dpad{display:none;grid-template-columns:repeat(3,52px);gap:4px;margin-top:14px;}
+@media(max-width:700px){.dpad{display:grid;justify-content:center;}}
+.dpad-btn{width:52px;height:52px;background:#0d0d1a;border:1px solid #1a2a2a;color:var(--nc);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:background 0.1s;}
+.dpad-btn:active{background:var(--nc);color:var(--bg);}
+
+/* FOOTER */
+footer{position:relative;z-index:10;text-align:center;padding:30px 20px;border-top:1px solid #00ff4110;font-size:11px;color:#2a4a2a;letter-spacing:2px;}
+footer span{color:var(--nw);}
+
+/* RESPONSIVE NAV */
+@media(max-width:700px){.nav-btn{font-size:13px;padding:5px 7px;}.nav-logo{font-size:16px;}}
+@media(max-width:480px){.nav-links .nav-btn:not(.always){display:none;}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="showPage('home')">GAME<span>LAB</span></div>
+  <div class="nav-links">
+    <button class="nav-btn always active" onclick="showPage('home')">🏠 INÍCIO</button>
+    <button class="nav-btn" onclick="showGame('snake')">🐍 SNAKE</button>
+    <button class="nav-btn" onclick="showGame('tetris')">🧩 TETRIS</button>
+    <button class="nav-btn" onclick="showGame('pong')">🏓 PONG</button>
+    <button class="nav-btn" onclick="showGame('invaders')">👾 INVADERS</button>
+    <button class="nav-btn" onclick="showGame('memory')">🃏 MEMÓRIA</button>
+    <button class="nav-btn" onclick="showGame('dino')">🦕 DINO</button>
+    <button class="nav-btn nav-privacy always" onclick="showPage('privacy')">🔒 PRIVACIDADE</button>
+    <button class="nav-sound always" id="soundBtn" onclick="toggleSound()" title="Som">🔇</button>
+  </div>
+</nav>
+
+<!-- ===== HOME PAGE ===== -->
+<div id="home" class="page active">
+  <!-- AD: Leaderboard 728x90 topo -->
+  <div class="ad-top">
+    <div class="ad-slot ad-728"><!-- Google AdSense 728x90 --></div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-tag">// Laboratório de Jogos Clássicos</div>
+    <h1>GAME<span>LAB</span></h1>
+    <p class="hero-sub">▶ JOGUE · APRENDA · DIVIRTA-SE ◀</p>
+    <div class="hero-stats">
+      <div>JOGOS: <strong>6</strong></div>
+      <div>TECNOLOGIA: <strong>HTML · CSS · JS</strong></div>
+      <div>GRÁTIS: <strong>100%</strong></div>
+    </div>
+  </div>
+
+  <div class="home-content">
+    <div class="home-main">
+      <div class="section-label">Escolha seu Jogo</div>
+      <div class="games-grid">
+        <div class="game-thumb" data-c="g" onclick="showGame('snake')">
+          <div class="thumb-preview">🐍</div>
+          <div class="thumb-body">
+            <div class="thumb-tag">Clássico · Arcade</div>
+            <div class="thumb-title">SNAKE NEON</div>
+            <div class="thumb-desc">Guie a cobra, coma os pontos e não bata nas paredes! Velocidade aumenta com o nível.</div>
+            <div class="thumb-tech"><strong>Técnicas:</strong> Canvas API · requestAnimationFrame · Collision detection</div>
+            <div class="thumb-footer">
+              <div class="diff-dots"><div class="diff-dot on"></div><div class="diff-dot on"></div><div class="diff-dot"></div><div class="diff-dot"></div><div class="diff-dot"></div></div>
+              <button class="play-btn">▶ JOGAR</button>
+            </div>
+          </div>
+        </div>
+        <div class="game-thumb" data-c="c" onclick="showGame('tetris')">
+          <div class="thumb-preview">🧩</div>
+          <div class="thumb-body">
+            <div class="thumb-tag">Puzzle · Lógica</div>
+            <div class="thumb-title">CSS TETRIX</div>
+            <div class="thumb-desc">Encaixe as peças, complete as linhas e alcance a maior pontuação possível!</div>
+            <div class="thumb-tech"><strong>Técnicas:</strong> Canvas 2D · Matriz 2D · Rotação de peças</div>
+            <div class="thumb-footer">
+              <div class="diff-dots"><div class="diff-dot on"></div><div class="diff-dot on"></div><div class="diff-dot on"></div><div class="diff-dot"></div><div class="diff-dot"></div></div>
+              <button class="play-btn">▶ JOGAR</button>
+            </div>
+          </div>
+        </div>
+        <div class="game-thumb" data-c="p" onclick="showGame('pong')">
+          <div class="thumb-preview">🏓</div>
+          <div class="thumb-body">
+            <div class="thumb-tag">Sport · 1 ou 2 Jogadores</div>
+            <div class="thumb-title">PONG DUAL</div>
+            <div class="thumb-desc">O clássico de todos os tempos! Jogue contra a IA ou com um amigo no mesmo teclado.</div>
+            <div class="thumb-tech"><strong>Técnicas:</strong> Canvas · Física de bolas · IA simples</div>
+            <div class="thumb-footer">
+              <div class="diff-dots"><div class="diff-dot on"></div><div class="diff-dot on"></div><div class="diff-dot"></div><div class="diff-dot"></div><div class="diff-dot"></div></div>
+              <button class="play-btn">▶ JOGAR</button>
+            </div>
+          </div>
+        </div>
+        <div class="game-thumb" data-c="y" onclick="showGame('invaders')">
+          <div class="thumb-preview">👾</div>
+          <div class="thumb-body">
+            <div class="thumb-tag">Shooter · Retro</div>
+            <div class="thumb-title">PIXEL INVADERS</div>
+            <div class="thumb-desc">Destrua as ondas de aliens antes que cheguem à Terra! Salve a galáxia!</div>
+            <div class="thumb-tech"><strong>Técnicas:</strong> Canvas · Sprites em arrays · Detecção de tiro</div>
+            <div class="thumb-footer">
+              <div class="diff-dots"><div class="diff-dot on"></div><div class="diff-dot on"></div><div class="diff-dot on"></div><div class="diff-dot"></div><div class="diff-dot"></div></div>
+              <button class="play-btn">▶ JOGAR</button>
+            </div>
+          </div>
+        </div>
+        <div class="game-thumb" data-c="o" onclick="showGame('memory')">
+          <div class="thumb-preview">🃏</div>
+          <div class="thumb-body">
+            <div class="thumb-tag">Card · Memória</div>
+            <div class="thumb-title">FLIP CIPHER</div>
+            <div class="thumb-desc">Encontre todos os pares de cartas! Teste sua memória e bata o recorde de tempo.</div>
+            <div class="thumb-tech"><strong>Técnicas:</strong> CSS 3D flip · Array shuffle · Timer</div>
+            <div class="thumb-footer">
+              <div class="diff-dots"><div class="diff-dot on"></div><div class="diff-dot"></div><div class="diff-dot"></div><div class="diff-dot"></div><div class="diff-dot"></div></div>
+              <button class="play-btn">▶ JOGAR</button>
+            </div>
+          </div>
+        </div>
+        <div class="game-thumb" data-c="w" onclick="showGame('dino')">
+          <div class="thumb-preview">🦕</div>
+          <div class="thumb-body">
+            <div class="thumb-tag">Endless · Runner</div>
+            <div class="thumb-title">DINO WAVE</div>
+            <div class="thumb-desc">Pule os obstáculos no ritmo! Quanto mais longe, mais rápido fica. Sobreviva!</div>
+            <div class="thumb-tech"><strong>Técnicas:</strong> Canvas · Parallax · Geração procedural</div>
+            <div class="thumb-footer">
+              <div class="diff-dots"><div class="diff-dot on"></div><div class="diff-dot on"></div><div class="diff-dot on"></div><div class="diff-dot"></div><div class="diff-dot"></div></div>
+              <button class="play-btn">▶ JOGAR</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AD: 336x280 entre seções -->
+      <div style="display:flex;justify-content:center;margin:32px 0;">
+        <div class="ad-slot ad-336"><!-- Google AdSense 336x280 --></div>
+      </div>
+
+      <!-- TERMINAL -->
+      <div class="section-label" style="margin-top:10px;">Sobre o Projeto</div>
+      <div class="terminal">
+        <div class="term-hdr"><div class="term-dot" style="background:#ff5f56"></div><div class="term-dot" style="background:#ffbd2e"></div><div class="term-dot" style="background:#27c93f"></div></div>
+        <div class="term-line"><span class="p">▶ </span><span class="c">// Todos os jogos feitos com HTML, CSS e JavaScript puro</span></div>
+        <div class="term-line"><span class="p">▶ </span><span class="c">// Sem frameworks, sem bibliotecas externas, 100% nativo</span></div>
+        <div class="term-line"><span class="p">▶ </span><span class="c">// Cada jogo explica como foi construído passo a passo</span></div>
+        <div class="term-line"><span class="p">▶ </span><span class="c">// Efeitos sonoros gerados via Web Audio API</span></div>
+        <div class="term-line"><span class="p">▶ </span>AGUARDANDO COMANDO <span class="blink"></span></div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="home-sidebar">
+      <div class="ad-slot ad-300" style="height:250px;"><!-- Google AdSense 300x250 --></div>
+      <div class="ad-slot ad-300x600"><!-- Google AdSense 300x600 --></div>
+    </div>
+  </div>
+
+  <footer>GAME<span>LAB</span> · Jogos Clássicos Online · Feito com ♥ em HTML · CSS · JS &nbsp;·&nbsp; <span style="cursor:pointer;text-decoration:underline;color:var(--nc);" onclick="showPage('privacy')">🔒 Política de Privacidade</span></footer>
+</div>
+
+<!-- ===== SNAKE PAGE ===== -->
+<div id="page-snake" class="page" data-c="g">
+  <div class="ad-top"><div class="ad-slot ad-728"><!-- AdSense 728x90 --></div></div>
+  <div class="game-page">
+    <div class="game-header">
+      <button class="back-btn" onclick="showPage('home')">◀ VOLTAR</button>
+      <div class="game-title" data-c="g">SNAKE <span>NEON</span></div>
+    </div>
+    <div class="game-layout">
+      <div class="game-main">
+        <div class="game-canvas-wrap" style="--cc:var(--ng)">
+          <canvas id="snakeCanvas" width="560" height="420"></canvas>
+          <div class="game-overlay" id="snakeOverlay">
+            <h2 style="color:var(--ng)">🐍 SNAKE NEON</h2>
+            <p>Use as setas ou WASD para mover</p>
+            <button class="start-btn" style="background:var(--ng)" onclick="startSnake()">▶ INICIAR JOGO</button>
+          </div>
+        </div>
+        <div class="game-stats">
+          <div class="stat-box" data-c="g"><div class="stat-label">PONTOS</div><div class="stat-value" id="snakeScore">000</div></div>
+          <div class="stat-box" data-c="g"><div class="stat-label">NÍVEL</div><div class="stat-value" id="snakeLevel">1</div></div>
+          <div class="stat-box" data-c="g"><div class="stat-label">RECORDE</div><div class="stat-value" id="snakeBest">000</div></div>
+        </div>
+        <div class="dpad">
+          <div></div><button class="dpad-btn" id="sU">▲</button><div></div>
+          <button class="dpad-btn" id="sL">◀</button><button class="dpad-btn" id="sD">▼</button><button class="dpad-btn" id="sR">▶</button>
+        </div>
+        <div class="controls-hint">
+          <h4>Controles</h4>
+          <div class="control-row"><span class="control-key">↑ ↓ ← →</span><span class="control-desc">Mover a cobra</span></div>
+          <div class="control-row"><span class="control-key">WASD</span><span class="control-desc">Alternativo</span></div>
+          <div class="control-row"><span class="control-key">ESPAÇO</span><span class="control-desc">Pausar / Reiniciar</span></div>
+        </div>
+        <div class="how-made">
+          <h3>⚙ COMO FOI FEITO</h3>
+          <div class="how-step"><div class="step-num">01</div><div class="step-text"><strong>Canvas API</strong> — O jogo usa <span class="code-chip">canvas.getContext('2d')</span> para desenhar tudo. A cobra é um array de objetos <span class="code-chip">{x, y}</span> representando cada segmento.</div></div>
+          <div class="how-step"><div class="step-num">02</div><div class="step-text"><strong>Game Loop</strong> — <span class="code-chip">requestAnimationFrame</span> cria o loop de 60fps. O delta de tempo controla a velocidade para ser consistente em qualquer dispositivo.</div></div>
+          <div class="how-step"><div class="step-num">03</div><div class="step-text"><strong>Movimento</strong> — A cada frame, um novo segmento é adicionado na frente (<span class="code-chip">unshift</span>) na direção atual, e o último é removido (<span class="code-chip">pop</span>) — exceto quando come comida.</div></div>
+          <div class="how-step"><div class="step-num">04</div><div class="step-text"><strong>Efeito Neon</strong> — <span class="code-chip">ctx.shadowBlur</span> e <span class="code-chip">ctx.shadowColor</span> criam o brilho. A trilha usa <span class="code-chip">rgba</span> com opacidade decrescente nos segmentos.</div></div>
+          <div class="how-step"><div class="step-num">05</div><div class="step-text"><strong>Som 8-bit</strong> — Web Audio API gera tons sintéticos. <span class="code-chip">OscillatorNode</span> + <span class="code-chip">GainNode</span> criam efeitos sem nenhum arquivo de áudio.</div></div>
+        </div>
+      </div>
+      <div class="game-sidebar">
+        <div class="ad-slot ad-300"><!-- AdSense 300x250 --></div>
+        <div class="ad-slot ad-300x600"><!-- AdSense 300x600 --></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TETRIS PAGE ===== -->
+<div id="page-tetris" class="page" data-c="c">
+  <div class="ad-top"><div class="ad-slot ad-728"><!-- AdSense 728x90 --></div></div>
+  <div class="game-page">
+    <div class="game-header">
+      <button class="back-btn" onclick="showPage('home')">◀ VOLTAR</button>
+      <div class="game-title" data-c="c">CSS <span>TETRIX</span></div>
+    </div>
+    <div class="game-layout">
+      <div class="game-main">
+        <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+          <div class="game-canvas-wrap" style="--cc:var(--nc);flex:1;min-width:220px;">
+            <canvas id="tetrisCanvas" width="300" height="600"></canvas>
+            <div class="game-overlay" id="tetrisOverlay">
+              <h2 style="color:var(--nc)">🧩 TETRIX</h2>
+              <p>Encaixe as peças e complete linhas</p>
+              <button class="start-btn" style="background:var(--nc)" onclick="startTetris()">▶ INICIAR JOGO</button>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;min-width:120px;">
+            <div style="background:var(--bg2);border:1px solid #1a2a2a;padding:14px;">
+              <div class="stat-label" style="font-size:10px;letter-spacing:2px;color:#3a5a5a;margin-bottom:6px;">PRÓXIMA</div>
+              <canvas id="tetrisNext" width="120" height="120"></canvas>
+            </div>
+            <div class="stat-box" data-c="c" style="border:1px solid #1a2a2a;"><div class="stat-label">PONTOS</div><div class="stat-value" id="tetrisScore">0</div></div>
+            <div class="stat-box" data-c="c" style="border:1px solid #1a2a2a;"><div class="stat-label">LINHAS</div><div class="stat-value" id="tetrisLines">0</div></div>
+            <div class="stat-box" data-c="c" style="border:1px solid #1a2a2a;"><div class="stat-label">NÍVEL</div><div class="stat-value" id="tetrisLevel">1</div></div>
+          </div>
+        </div>
+        <div class="dpad">
+          <div></div><button class="dpad-btn" id="tU">↻</button><div></div>
+          <button class="dpad-btn" id="tL">◀</button><button class="dpad-btn" id="tD">▼</button><button class="dpad-btn" id="tR">▶</button>
+        </div>
+        <div class="controls-hint">
+          <h4>Controles</h4>
+          <div class="control-row"><span class="control-key">← →</span><span class="control-desc">Mover peça</span></div>
+          <div class="control-row"><span class="control-key">↑ ou Z</span><span class="control-desc">Girar peça</span></div>
+          <div class="control-row"><span class="control-key">↓</span><span class="control-desc">Acelerar queda</span></div>
+          <div class="control-row"><span class="control-key">ESPAÇO</span><span class="control-desc">Drop imediato</span></div>
+        </div>
+        <div class="how-made">
+          <h3>⚙ COMO FOI FEITO</h3>
+          <div class="how-step"><div class="step-num">01</div><div class="step-text"><strong>Matriz 2D</strong> — O tabuleiro é um array <span class="code-chip">10×20</span>. Cada peça (tetromino) é definida como matriz de 0s e 1s. Ex: L-piece = <span class="code-chip">[[1,0],[1,0],[1,1]]</span>.</div></div>
+          <div class="how-step"><div class="step-num">02</div><div class="step-text"><strong>Rotação</strong> — Rotacionar uma peça é transpor a matriz e inverter linhas: <span class="code-chip">p[y][x] → p[x][rows-1-y]</span>. Wall-kick verifica se cabe após rotacionar.</div></div>
+          <div class="how-step"><div class="step-num">03</div><div class="step-text"><strong>Gravidade</strong> — Um contador de tempo determina quando a peça cai. A cada nível, o intervalo diminui (nível 1 = 800ms, nível 10 = 80ms).</div></div>
+          <div class="how-step"><div class="step-num">04</div><div class="step-text"><strong>Clear de linhas</strong> — Quando uma linha fica completa (<span class="code-chip">every(cell => cell !== 0)</span>), é removida e o score aumenta. 4 linhas simultâneas = TETRIS!</div></div>
+        </div>
+      </div>
+      <div class="game-sidebar">
+        <div class="ad-slot ad-300"><!-- AdSense 300x250 --></div>
+        <div class="ad-slot ad-336" style="margin-top:16px;"><!-- AdSense 336x280 --></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PONG PAGE ===== -->
+<div id="page-pong" class="page" data-c="p">
+  <div class="ad-top"><div class="ad-slot ad-728"><!-- AdSense 728x90 --></div></div>
+  <div class="game-page">
+    <div class="game-header">
+      <button class="back-btn" onclick="showPage('home')">◀ VOLTAR</button>
+      <div class="game-title" data-c="p">PONG <span>DUAL</span></div>
+    </div>
+    <div class="game-layout">
+      <div class="game-main">
+        <div class="game-canvas-wrap" style="--cc:var(--np)">
+          <canvas id="pongCanvas" width="700" height="420"></canvas>
+          <div class="game-overlay" id="pongOverlay">
+            <h2 style="color:var(--np)">🏓 PONG DUAL</h2>
+            <p>1 Jogador vs IA</p>
+            <button class="start-btn" style="background:var(--np)" onclick="startPong()">▶ INICIAR JOGO</button>
+          </div>
+        </div>
+        <div class="game-stats">
+          <div class="stat-box" data-c="p"><div class="stat-label">JOGADOR</div><div class="stat-value" id="pongP1">0</div></div>
+          <div class="stat-box" data-c="p"><div class="stat-label">IA</div><div class="stat-value" id="pongP2">0</div></div>
+        </div>
+        <div class="dpad" style="grid-template-columns:repeat(1,52px);gap:4px;">
+          <button class="dpad-btn" id="pU" style="grid-column:1">▲</button>
+          <button class="dpad-btn" id="pD" style="grid-column:1">▼</button>
+        </div>
+        <div class="controls-hint">
+          <h4>Controles — Jogador (raquete esquerda)</h4>
+          <div class="control-row"><span class="control-key">W / ↑</span><span class="control-desc">Subir</span></div>
+          <div class="control-row"><span class="control-key">S / ↓</span><span class="control-desc">Descer</span></div>
+        </div>
+        <div class="how-made">
+          <h3>⚙ COMO FOI FEITO</h3>
+          <div class="how-step"><div class="step-num">01</div><div class="step-text"><strong>Física da bola</strong> — A bola tem <span class="code-chip">vx</span> e <span class="code-chip">vy</span> (velocidade). Ao bater na parede, <span class="code-chip">vy *= -1</span>. Ao bater na raquete, o ângulo muda baseado no ponto de impacto.</div></div>
+          <div class="how-step"><div class="step-num">02</div><div class="step-text"><strong>Inteligência Artificial</strong> — A IA move a raquete em direção à bola com velocidade limitada, criando um desafio justo. Ela não é perfeita de propósito!</div></div>
+          <div class="how-step"><div class="step-num">03</div><div class="step-text"><strong>Efeito de rastro</strong> — A cada frame, desenhamos o fundo com <span class="code-chip">fillRect</span> semi-transparente (<span class="code-chip">rgba(0,0,0,0.3)</span>), criando um rastro que some gradualmente.</div></div>
+        </div>
+      </div>
+      <div class="game-sidebar">
+        <div class="ad-slot ad-300"><!-- AdSense 300x250 --></div>
+        <div class="ad-slot ad-300x600" style="margin-top:16px;"><!-- AdSense 300x600 --></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== INVADERS PAGE ===== -->
+<div id="page-invaders" class="page" data-c="y">
+  <div class="ad-top"><div class="ad-slot ad-728"><!-- AdSense 728x90 --></div></div>
+  <div class="game-page">
+    <div class="game-header">
+      <button class="back-btn" onclick="showPage('home')">◀ VOLTAR</button>
+      <div class="game-title" data-c="y">PIXEL <span>INVADERS</span></div>
+    </div>
+    <div class="game-layout">
+      <div class="game-main">
+        <div class="game-canvas-wrap" style="--cc:var(--ny)">
+          <canvas id="invadersCanvas" width="560" height="480"></canvas>
+          <div class="game-overlay" id="invadersOverlay">
+            <h2 style="color:var(--ny)">👾 PIXEL INVADERS</h2>
+            <p>Destrua os aliens antes que cheguem!</p>
+            <button class="start-btn" style="background:var(--ny);color:#000" onclick="startInvaders()">▶ INICIAR JOGO</button>
+          </div>
+        </div>
+        <div class="game-stats">
+          <div class="stat-box" data-c="y"><div class="stat-label">PONTOS</div><div class="stat-value" id="invScore">0</div></div>
+          <div class="stat-box" data-c="y"><div class="stat-label">VIDAS</div><div class="stat-value" id="invLives">♥♥♥</div></div>
+          <div class="stat-box" data-c="y"><div class="stat-label">ONDA</div><div class="stat-value" id="invWave">1</div></div>
+        </div>
+        <div class="dpad">
+          <button class="dpad-btn" id="iL" style="grid-column:1">◀</button>
+          <button class="dpad-btn" id="iFire" style="grid-column:2;background:#ffe60022;border-color:var(--ny);color:var(--ny);">🔥</button>
+          <button class="dpad-btn" id="iR" style="grid-column:3">▶</button>
+        </div>
+        <div class="controls-hint">
+          <h4>Controles</h4>
+          <div class="control-row"><span class="control-key">← →</span><span class="control-desc">Mover nave</span></div>
+          <div class="control-row"><span class="control-key">ESPAÇO</span><span class="control-desc">Atirar</span></div>
+        </div>
+        <div class="how-made">
+          <h3>⚙ COMO FOI FEITO</h3>
+          <div class="how-step"><div class="step-num">01</div><div class="step-text"><strong>Grid de inimigos</strong> — Os aliens são armazenados em array com posição <span class="code-chip">x, y</span> e status <span class="code-chip">alive</span>. Toda a grade move-se junta, revertendo direção ao atingir as bordas.</div></div>
+          <div class="how-step"><div class="step-num">02</div><div class="step-text"><strong>Tiros</strong> — Arrays separados para <span class="code-chip">playerBullets</span> e <span class="code-chip">alienBullets</span>. A cada frame, posições atualizam e checamos colisões com <span class="code-chip">AABB</span> (Axis-Aligned Bounding Box).</div></div>
+          <div class="how-step"><div class="step-num">03</div><div class="step-text"><strong>Pixel Art</strong> — Os aliens são desenhados no Canvas com <span class="code-chip">fillRect</span> pixel por pixel, baseado em um template de matriz binária. Dois frames de animação criam o efeito de "piscar".</div></div>
+        </div>
+      </div>
+      <div class="game-sidebar">
+        <div class="ad-slot ad-300"><!-- AdSense 300x250 --></div>
+        <div class="ad-slot ad-300x600" style="margin-top:16px;"><!-- AdSense 300x600 --></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MEMORY PAGE ===== -->
+<div id="page-memory" class="page" data-c="o">
+  <div class="ad-top"><div class="ad-slot ad-728"><!-- AdSense 728x90 --></div></div>
+  <div class="game-page">
+    <div class="game-header">
+      <button class="back-btn" onclick="showPage('home')">◀ VOLTAR</button>
+      <div class="game-title" data-c="o">FLIP <span>CIPHER</span></div>
+    </div>
+    <div class="game-layout">
+      <div class="game-main">
+        <div class="game-stats" style="margin-bottom:16px;">
+          <div class="stat-box" data-c="o"><div class="stat-label">PARES</div><div class="stat-value" id="memPairs">0/8</div></div>
+          <div class="stat-box" data-c="o"><div class="stat-label">JOGADAS</div><div class="stat-value" id="memMoves">0</div></div>
+          <div class="stat-box" data-c="o"><div class="stat-label">TEMPO</div><div class="stat-value" id="memTime">0s</div></div>
+        </div>
+        <div id="memoryBoard" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:500px;margin:0 auto 16px;"></div>
+        <div style="text-align:center;margin-bottom:16px;">
+          <button class="play-btn" data-c="o" onclick="initMemory()" style="--cc:var(--no)">↺ REINICIAR</button>
+        </div>
+        <div class="how-made">
+          <h3>⚙ COMO FOI FEITO</h3>
+          <div class="how-step"><div class="step-num">01</div><div class="step-text"><strong>CSS 3D Flip</strong> — Cada carta tem duas faces (<span class="code-chip">.front</span> e <span class="code-chip">.back</span>). A classe <span class="code-chip">.flipped</span> aplica <span class="code-chip">rotateY(180deg)</span> ao container com <span class="code-chip">transform-style: preserve-3d</span>.</div></div>
+          <div class="how-step"><div class="step-num">02</div><div class="step-text"><strong>Fisher-Yates Shuffle</strong> — Para embaralhar: percorre o array de trás para frente, trocando cada elemento com um aleatório anterior. Garante distribuição uniforme.</div></div>
+          <div class="how-step"><div class="step-num">03</div><div class="step-text"><strong>Lógica de pares</strong> — Quando 2 cartas são viradas, comparamos os <span class="code-chip">data-value</span>. Par correto = ficam visíveis. Errado = <span class="code-chip">setTimeout</span> de 800ms vira de volta.</div></div>
+        </div>
+      </div>
+      <div class="game-sidebar">
+        <div class="ad-slot ad-300"><!-- AdSense 300x250 --></div>
+        <div class="ad-slot ad-336" style="margin-top:16px;"><!-- AdSense 336x280 --></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DINO PAGE ===== -->
+<div id="page-dino" class="page" data-c="w">
+  <div class="ad-top"><div class="ad-slot ad-728"><!-- AdSense 728x90 --></div></div>
+  <div class="game-page">
+    <div class="game-header">
+      <button class="back-btn" onclick="showPage('home')">◀ VOLTAR</button>
+      <div class="game-title" data-c="w">DINO <span>WAVE</span></div>
+    </div>
+    <div class="game-layout">
+      <div class="game-main">
+        <div class="game-canvas-wrap" style="--cc:var(--nw)">
+          <canvas id="dinoCanvas" width="600" height="300"></canvas>
+          <div class="game-overlay" id="dinoOverlay">
+            <h2 style="color:var(--nw)">🦕 DINO WAVE</h2>
+            <p>Pule os obstáculos para sobreviver!</p>
+            <button class="start-btn" style="background:var(--nw);color:#000" onclick="startDino()">▶ INICIAR JOGO</button>
+          </div>
+        </div>
+        <div class="game-stats">
+          <div class="stat-box" data-c="w"><div class="stat-label">DISTÂNCIA</div><div class="stat-value" id="dinoScore">0</div></div>
+          <div class="stat-box" data-c="w"><div class="stat-label">RECORDE</div><div class="stat-value" id="dinoBest">0</div></div>
+        </div>
+        <div class="dpad" style="grid-template-columns:repeat(1,80px);">
+          <button class="dpad-btn" id="dinoJump" style="width:80px;font-size:28px;">▲</button>
+        </div>
+        <div class="controls-hint">
+          <h4>Controles</h4>
+          <div class="control-row"><span class="control-key">ESPAÇO / ↑</span><span class="control-desc">Pular</span></div>
+          <div class="control-row"><span class="control-key">Toque na tela</span><span class="control-desc">Pular (mobile)</span></div>
+        </div>
+        <div class="how-made">
+          <h3>⚙ COMO FOI FEITO</h3>
+          <div class="how-step"><div class="step-num">01</div><div class="step-text"><strong>Parallax</strong> — O chão tem 2 camadas em velocidades diferentes. Objetos de fundo (montanhas) movem-se mais devagar que os obstáculos, criando profundidade com simples <span class="code-chip">x -= speed * 0.3</span>.</div></div>
+          <div class="how-step"><div class="step-num">02</div><div class="step-text"><strong>Física de pulo</strong> — O dinossauro tem <span class="code-chip">velocityY</span>. No pulo, <span class="code-chip">vy = -15</span>. A cada frame, <span class="code-chip">vy += 0.8</span> (gravidade). Ao atingir o chão, <span class="code-chip">vy = 0</span>.</div></div>
+          <div class="how-step"><div class="step-num">03</div><div class="step-text"><strong>Geração procedural</strong> — Obstáculos surgem em intervalos aleatórios (<span class="code-chip">Math.random()</span>) com alturas variadas. A velocidade cresce gradualmente com o score.</div></div>
+        </div>
+      </div>
+      <div class="game-sidebar">
+        <div class="ad-slot ad-300"><!-- AdSense 300x250 --></div>
+        <div class="ad-slot ad-300x600" style="margin-top:16px;"><!-- AdSense 300x600 --></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Memory Cards */
+.mem-card{aspect-ratio:1;perspective:600px;cursor:pointer;}
+.mem-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.5s;border-radius:2px;}
+.mem-card.flipped .mem-inner{transform:rotateY(180deg);}
+.mem-card.matched .mem-inner{transform:rotateY(180deg);}
+.mem-face{position:absolute;inset:0;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;border-radius:2px;}
+.mem-back{background:#0d0d1a;border:2px solid #1a3a2a;font-size:28px;}
+.mem-back::after{content:'?';font-family:'Orbitron',sans-serif;color:#2a4a2a;font-size:22px;}
+.mem-front{background:#0a1a0a;border:2px solid var(--no);transform:rotateY(180deg);font-size:36px;}
+.mem-card.matched .mem-front{border-color:var(--ng);box-shadow:0 0 12px #00ff4133;background:#0a1a0a;}
+</style>
+
+<script>
+// ===== AUDIO ENGINE =====
+let audioCtx = null, soundOn = false;
+function getAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function beep(freq,dur,type='square',vol=0.15){
+  if(!soundOn)return;
+  try{const a=getAudio(),o=a.createOscillator(),g=a.createGain();
+  o.connect(g);g.connect(a.destination);
+  o.type=type;o.frequency.setValueAtTime(freq,a.currentTime);
+  g.gain.setValueAtTime(vol,a.currentTime);g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+dur);
+  o.start(a.currentTime);o.stop(a.currentTime+dur);}catch(e){}}
+function sndEat(){beep(523,0.08);setTimeout(()=>beep(659,0.08),80);}
+function sndDie(){beep(200,0.15,'sawtooth',0.2);setTimeout(()=>beep(150,0.3,'sawtooth',0.2),150);}
+function sndScore(){beep(440,0.05);setTimeout(()=>beep(554,0.05),60);setTimeout(()=>beep(660,0.1),120);}
+function sndClick(){beep(800,0.04,'sine',0.1);}
+function sndFlip(){beep(440,0.06,'sine',0.08);}
+function sndMatch(){beep(523,0.06);setTimeout(()=>beep(659,0.06),70);setTimeout(()=>beep(784,0.12),140);}
+function sndShoot(){beep(880,0.05,'square',0.08);}
+function sndExplode(){beep(150,0.12,'sawtooth',0.15);setTimeout(()=>beep(100,0.15,'sawtooth',0.1),80);}
+function sndJump(){beep(320,0.06,'sine');setTimeout(()=>beep(420,0.06,'sine'),70);}
+function sndPong(){beep(440,0.05,'square',0.1);}
+function toggleSound(){soundOn=!soundOn;document.getElementById('soundBtn').textContent=soundOn?'🔊':'🔇';document.getElementById('soundBtn').classList.toggle('on',soundOn);if(soundOn)sndClick();}
+
+// ===== NAVIGATION =====
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelector(`[onclick="showPage('${id}')"]`)?.classList.add('active');
+  window.scrollTo(0,0);
+  // Stop all games
+  stopAllGames();
+}
+function showGame(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  window.scrollTo(0,0);
+  stopAllGames();
+  // Show overlay
+  const ov=document.getElementById(name+'Overlay');
+  if(ov)ov.style.display='flex';
+  // Init memory on enter
+  if(name==='memory')initMemory();
+}
+let activeGames={};
+function stopAllGames(){
+  Object.values(activeGames).forEach(id=>cancelAnimationFrame(id));
+  activeGames={};
+  // Reset intervals
+  if(window._snakeInterval)clearInterval(window._snakeInterval);
+  if(window._tetrisInterval)clearInterval(window._tetrisInterval);
+  if(window._invadersInterval)clearInterval(window._invadersInterval);
+  if(window._dinoRAF)cancelAnimationFrame(window._dinoRAF);
+  if(window._pongRAF)cancelAnimationFrame(window._pongRAF);
+  if(window._memInterval)clearInterval(window._memInterval);
+}
+
+// ===== SNAKE =====
+function startSnake(){
+  document.getElementById('snakeOverlay').style.display='none';
+  const canvas=document.getElementById('snakeCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,CELL=20;
+  const cols=W/CELL,rows=H/CELL;
+  let snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}],dir={x:1,y:0},nd={x:1,y:0},food,score=0,level=1,best=parseInt(localStorage.getItem('snakeBest')||0),running=true,paused=false;
+  document.getElementById('snakeBest').textContent=String(best).padStart(3,'0');
+  function placeFood(){let p;do{p={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}}while(snake.some(s=>s.x===p.x&&s.y===p.y));food=p;}
+  placeFood();
+  function draw(){
+    ctx.fillStyle='#03030a';ctx.fillRect(0,0,W,H);
+    // Grid
+    ctx.strokeStyle='rgba(0,255,65,0.04)';ctx.lineWidth=0.5;
+    for(let x=0;x<W;x+=CELL){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=CELL){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    // Food - pulsing
+    const t=Date.now()/300,pulse=Math.sin(t)*2;
+    ctx.shadowBlur=16+pulse;ctx.shadowColor='#ff2d78';ctx.fillStyle='#ff2d78';
+    ctx.fillRect(food.x*CELL+3,food.y*CELL+3,CELL-6,CELL-6);
+    // Snake
+    snake.forEach((s,i)=>{
+      const a=Math.max(0.2,1-(i/snake.length)*0.7);
+      ctx.shadowBlur=i===0?20:6;ctx.shadowColor=`rgba(0,255,65,${a})`;
+      ctx.fillStyle=i===0?'#00ff41':`rgba(0,${Math.floor(200*a)},${Math.floor(60*a)},${a})`;
+      ctx.fillRect(s.x*CELL+1,s.y*CELL+1,CELL-2,CELL-2);
+      if(i===0){ctx.fillStyle='#00ff41';ctx.fillRect(s.x*CELL+CELL/2-1,s.y*CELL+4,2,2);ctx.fillRect(s.x*CELL+CELL/2+3,s.y*CELL+4,2,2);}
+    });
+    ctx.shadowBlur=0;
+  }
+  function update(){
+    if(paused||!running)return;
+    dir=nd;
+    const head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+    if(head.x<0||head.x>=cols||head.y<0||head.y>=rows||snake.some(s=>s.x===head.x&&s.y===head.y)){
+      sndDie();running=false;
+      if(score>best){best=score;localStorage.setItem('snakeBest',best);document.getElementById('snakeBest').textContent=String(best).padStart(3,'0');}
+      // Game over overlay
+      ctx.fillStyle='rgba(0,0,0,0.75)';ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#ff2d78';ctx.font='bold 28px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('GAME OVER',W/2,H/2-20);
+      ctx.fillStyle='#00e5ff';ctx.font='16px Share Tech Mono,monospace';ctx.fillText('ESPAÇO para reiniciar',W/2,H/2+14);
+      return;
+    }
+    snake.unshift(head);
+    if(head.x===food.x&&head.y===food.y){
+      score+=10*level;level=Math.floor(score/80)+1;
+      document.getElementById('snakeScore').textContent=String(score).padStart(3,'0');
+      document.getElementById('snakeLevel').textContent=level;
+      sndEat();placeFood();
+    }else{snake.pop();}
+  }
+  const speed=()=>Math.max(70,200-(level-1)*18);
+  let last=0,interval=speed();
+  clearInterval(window._snakeInterval);
+  window._snakeInterval=setInterval(()=>{update();draw();interval=speed();},interval);
+  // Hmm, better use rAF with timestamp:
+  clearInterval(window._snakeInterval);
+  let lt=0;
+  function loop(ts){if(!running){return;}if(ts-lt>speed()){update();lt=ts;}draw();activeGames.snake=requestAnimationFrame(loop);}
+  activeGames.snake=requestAnimationFrame(loop);
+
+  const K={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0},w:{x:0,y:-1},s:{x:0,y:1},a:{x:-1,y:0},d:{x:1,y:0}};
+  document.onkeydown=e=>{
+    if(K[e.key]){e.preventDefault();const d=K[e.key];if(d.x!==-dir.x||d.y!==-dir.y)nd=d;}
+    if(e.code==='Space'){e.preventDefault();if(!running)startSnake();else paused=!paused;}
+  };
+  const setDir=(d)=>{if(!running){startSnake();return;}if(d.x!==-dir.x||d.y!==-dir.y)nd=d;};
+  document.getElementById('sU').onclick=()=>setDir({x:0,y:-1});
+  document.getElementById('sD').onclick=()=>setDir({x:0,y:1});
+  document.getElementById('sL').onclick=()=>setDir({x:-1,y:0});
+  document.getElementById('sR').onclick=()=>setDir({x:1,y:0});
+}
+
+// ===== TETRIS =====
+const TETROMINOES=[
+  {shape:[[1,1,1,1]],color:'#00e5ff'},
+  {shape:[[1,1],[1,1]],color:'#ffe600'},
+  {shape:[[0,1,0],[1,1,1]],color:'#cc44ff'},
+  {shape:[[1,0,0],[1,1,1]],color:'#ff6b00'},
+  {shape:[[0,0,1],[1,1,1]],color:'#00ff41'},
+  {shape:[[0,1,1],[1,1,0]],color:'#ff2d78'},
+  {shape:[[1,1,0],[0,1,1]],color:'#00e5ff'},
+];
+function startTetris(){
+  document.getElementById('tetrisOverlay').style.display='none';
+  const canvas=document.getElementById('tetrisCanvas');
+  const ctx=canvas.getContext('2d');
+  const next=document.getElementById('tetrisNext');
+  const nctx=next.getContext('2d');
+  const W=canvas.width,H=canvas.height,CELL=30,COLS=10,ROWS=20;
+  let board=Array.from({length:ROWS},()=>Array(COLS).fill(0));
+  let score=0,lines=0,level=1,running=true;
+  let cur,curX,curY,nextPiece;
+  function newPiece(){
+    const t=nextPiece||TETROMINOES[Math.floor(Math.random()*TETROMINOES.length)];
+    nextPiece=TETROMINOES[Math.floor(Math.random()*TETROMINOES.length)];
+    cur=JSON.parse(JSON.stringify(t));
+    curX=Math.floor((COLS-cur.shape[0].length)/2);curY=0;
+    if(collides(cur.shape,curX,curY)){running=false;gameOverTetris();}
+    drawNext();
+  }
+  function drawNext(){nctx.fillStyle='#03030a';nctx.fillRect(0,0,120,120);
+    const s=nextPiece.shape,ox=(4-s[0].length)/2*25,oy=(4-s.length)/2*25;
+    s.forEach((r,y)=>r.forEach((c,x)=>{if(c){nctx.fillStyle=nextPiece.color;nctx.shadowBlur=8;nctx.shadowColor=nextPiece.color;nctx.fillRect(ox+x*25+1,oy+y*25+1,23,23);}}))}
+  function collides(sh,px,py){return sh.some((r,y)=>r.some((c,x)=>c&&(py+y>=ROWS||px+x<0||px+x>=COLS||board[py+y]?.[px+x])))}
+  function place(){
+    cur.shape.forEach((r,y)=>r.forEach((c,x)=>{if(c)board[curY+y][curX+x]=cur.color;}));
+    // Clear lines
+    let cleared=0;
+    for(let y=ROWS-1;y>=0;y--){
+      if(board[y].every(c=>c)){board.splice(y,1);board.unshift(Array(COLS).fill(0));cleared++;y++;}}
+    if(cleared>0){sndScore();lines+=cleared;score+=cleared===4?800*level:cleared===3?500*level:cleared===2?300*level:100*level;
+    level=Math.floor(lines/10)+1;document.getElementById('tetrisScore').textContent=score;document.getElementById('tetrisLines').textContent=lines;document.getElementById('tetrisLevel').textContent=level;}
+    newPiece();
+  }
+  function draw(){
+    ctx.fillStyle='#03030a';ctx.fillRect(0,0,W,H);
+    // Grid
+    ctx.strokeStyle='rgba(0,229,255,0.05)';ctx.lineWidth=0.5;
+    for(let x=0;x<=COLS;x++){ctx.beginPath();ctx.moveTo(x*CELL,0);ctx.lineTo(x*CELL,H);ctx.stroke();}
+    for(let y=0;y<=ROWS;y++){ctx.beginPath();ctx.moveTo(0,y*CELL);ctx.lineTo(W,y*CELL);ctx.stroke();}
+    // Board
+    board.forEach((r,y)=>r.forEach((c,x)=>{if(c){ctx.fillStyle=c;ctx.shadowBlur=6;ctx.shadowColor=c;ctx.fillRect(x*CELL+1,y*CELL+1,CELL-2,CELL-2);}}));
+    // Ghost
+    let gy=curY;while(!collides(cur.shape,curX,gy+1))gy++;
+    cur.shape.forEach((r,y)=>r.forEach((c,x)=>{if(c){ctx.fillStyle='rgba(255,255,255,0.08)';ctx.shadowBlur=0;ctx.fillRect((curX+x)*CELL+1,(gy+y)*CELL+1,CELL-2,CELL-2);}}));
+    // Current
+    cur.shape.forEach((r,y)=>r.forEach((c,x)=>{if(c){ctx.fillStyle=cur.color;ctx.shadowBlur=10;ctx.shadowColor=cur.color;ctx.fillRect((curX+x)*CELL+1,(curY+y)*CELL+1,CELL-2,CELL-2);}}));
+    ctx.shadowBlur=0;
+  }
+  function rotate(sh){return sh[0].map((_,i)=>sh.map(r=>r[i]).reverse());}
+  function gameOverTetris(){ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillRect(0,0,W,H);ctx.fillStyle='#00e5ff';ctx.font='bold 24px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('GAME OVER',W/2,H/2-14);ctx.font='14px Share Tech Mono';ctx.fillStyle='#00ff41';ctx.fillText('Recarregue para jogar de novo',W/2,H/2+14);}
+  newPiece();draw();
+  const speed=()=>Math.max(80,800-(level-1)*70);
+  let lt=0;
+  function loop(ts){if(!running)return;if(ts-lt>speed()){if(!collides(cur.shape,curX,curY+1)){curY++;}else{place();}lt=ts;}draw();activeGames.tetris=requestAnimationFrame(loop);}
+  activeGames.tetris=requestAnimationFrame(loop);
+  document.onkeydown=e=>{
+    if(!running)return;
+    if(e.key==='ArrowLeft'||e.key==='a'){if(!collides(cur.shape,curX-1,curY))curX--;}
+    else if(e.key==='ArrowRight'||e.key==='d'){if(!collides(cur.shape,curX+1,curY))curX++;}
+    else if(e.key==='ArrowDown'||e.key==='s'){if(!collides(cur.shape,curX,curY+1))curY++;else place();}
+    else if(e.key==='ArrowUp'||e.key==='z'){const r=rotate(cur.shape);if(!collides(r,curX,curY)){cur.shape=r;sndClick();}}
+    else if(e.code==='Space'){e.preventDefault();while(!collides(cur.shape,curX,curY+1))curY++;place();}
+    draw();
+  };
+  document.getElementById('tL').onclick=()=>{if(!collides(cur.shape,curX-1,curY))curX--;draw();};
+  document.getElementById('tR').onclick=()=>{if(!collides(cur.shape,curX+1,curY))curX++;draw();};
+  document.getElementById('tD').onclick=()=>{if(!collides(cur.shape,curX,curY+1))curY++;else place();draw();};
+  document.getElementById('tU').onclick=()=>{const r=rotate(cur.shape);if(!collides(r,curX,curY)){cur.shape=r;sndClick();}draw();};
+}
+
+// ===== PONG =====
+function startPong(){
+  document.getElementById('pongOverlay').style.display='none';
+  const canvas=document.getElementById('pongCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,PW=12,PH=80,BALL=10;
+  let p1={y:H/2-PH/2,score:0},p2={y:H/2-PH/2,score:0};
+  let ball={x:W/2,y:H/2,vx:4,vy:3};
+  let keys={},running=true;
+  function reset(){ball={x:W/2,y:H/2,vx:(Math.random()>0.5?1:-1)*4,vy:(Math.random()*4-2)};}
+  function update(){
+    if(keys['w']||keys['ArrowUp'])p1.y=Math.max(0,p1.y-6);
+    if(keys['s']||keys['ArrowDown'])p1.y=Math.min(H-PH,p1.y+6);
+    // AI
+    const aim=ball.y-PH/2;p2.y+=(aim-p2.y)*0.065;p2.y=Math.max(0,Math.min(H-PH,p2.y));
+    ball.x+=ball.vx;ball.y+=ball.vy;
+    if(ball.y<BALL||ball.y>H-BALL){ball.vy*=-1;sndPong();}
+    // P1 paddle
+    if(ball.x<PW+20+BALL&&ball.y>p1.y&&ball.y<p1.y+PH){ball.vx=Math.abs(ball.vx)+0.2;ball.vy=(ball.y-(p1.y+PH/2))*0.22;sndPong();}
+    // P2 paddle
+    if(ball.x>W-PW-20-BALL&&ball.y>p2.y&&ball.y<p2.y+PH){ball.vx=-(Math.abs(ball.vx)+0.2);ball.vy=(ball.y-(p2.y+PH/2))*0.22;sndPong();}
+    // Score
+    if(ball.x<0){p2.score++;sndDie();document.getElementById('pongP2').textContent=p2.score;reset();}
+    if(ball.x>W){p1.score++;sndScore();document.getElementById('pongP1').textContent=p1.score;reset();}
+    ball.vx=Math.max(-14,Math.min(14,ball.vx));ball.vy=Math.max(-10,Math.min(10,ball.vy));
+  }
+  function draw(){
+    ctx.fillStyle='rgba(3,3,10,0.35)';ctx.fillRect(0,0,W,H);
+    // Center line
+    ctx.setLineDash([8,8]);ctx.strokeStyle='#1a2a1a';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();ctx.setLineDash([]);
+    // Paddles
+    ctx.shadowBlur=14;ctx.shadowColor='#ff2d78';ctx.fillStyle='#ff2d78';
+    ctx.fillRect(20,p1.y,PW,PH);ctx.fillRect(W-20-PW,p2.y,PW,PH);
+    // Ball trail
+    ctx.shadowBlur=20;ctx.shadowColor='#ffffff';ctx.fillStyle='#ffffff';
+    ctx.beginPath();ctx.arc(ball.x,ball.y,BALL/2,0,Math.PI*2);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+  document.onkeydown=e=>{keys[e.key]=true;};
+  document.onkeyup=e=>{keys[e.key]=false;};
+  document.getElementById('pU').addEventListener('touchstart',()=>keys['w']=true);
+  document.getElementById('pU').addEventListener('touchend',()=>keys['w']=false);
+  document.getElementById('pD').addEventListener('touchstart',()=>keys['s']=true);
+  document.getElementById('pD').addEventListener('touchend',()=>keys['s']=false);
+  document.getElementById('pU').onmousedown=()=>keys['w']=true;document.getElementById('pU').onmouseup=()=>keys['w']=false;
+  document.getElementById('pD').onmousedown=()=>keys['s']=true;document.getElementById('pD').onmouseup=()=>keys['s']=false;
+  function loop(){update();draw();activeGames.pong=requestAnimationFrame(loop);}
+  // Draw initial black bg
+  ctx.fillStyle='#03030a';ctx.fillRect(0,0,W,H);
+  activeGames.pong=requestAnimationFrame(loop);
+}
+
+// ===== INVADERS =====
+function startInvaders(){
+  document.getElementById('invadersOverlay').style.display='none';
+  const canvas=document.getElementById('invadersCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  const ALIEN_ROWS=4,ALIEN_COLS=10,AS=36;
+  let ship={x:W/2-20,y:H-60,w:40,h:30};
+  let aliens=[],bullets=[],alienBullets=[],score=0,lives=3,wave=1,running=true,keys={};
+  let alienDir=1,alienMoveTimer=0,alienMoveInterval=800,frameToggle=0;
+  let shootCooldown=0;
+
+  const ALIEN_FRAMES=[
+    [[0,1,0,1,0],[1,1,1,1,1],[1,0,1,0,1],[0,1,0,1,0]],
+    [[1,0,0,0,1],[0,1,1,1,0],[0,1,0,1,0],[1,0,0,0,1]],
+    [[0,1,1,1,0],[1,0,0,0,1],[1,1,1,1,1],[0,0,1,0,0]],
+    [[1,1,0,1,1],[0,1,1,1,0],[1,0,0,0,1],[1,1,0,1,1]],
+  ];
+  const ALIEN_COLORS=['#ffe600','#ff6b00','#ff2d78','#cc44ff'];
+
+  function initAliens(){
+    aliens=[];
+    for(let r=0;r<ALIEN_ROWS;r++)for(let c=0;c<ALIEN_COLS;c++)
+      aliens.push({x:50+c*AS,y:60+r*AS,alive:true,row:r,col:c,frame:0});
+  }
+  initAliens();
+
+  function drawAlien(a){
+    const pat=ALIEN_FRAMES[a.row%4];const px=4;const col=ALIEN_COLORS[a.row%4];
+    ctx.fillStyle=col;ctx.shadowBlur=6;ctx.shadowColor=col;
+    pat.forEach((row,y)=>row.forEach((c,x)=>{if(c)ctx.fillRect(a.x+x*px+(a.frame?px:0),a.y+y*px,px-1,px-1);}));
+  }
+
+  function draw(){
+    ctx.fillStyle='#03030a';ctx.fillRect(0,0,W,H);
+    // Stars
+    ctx.fillStyle='rgba(255,255,255,0.4)';
+    for(let i=0;i<30;i++){const sx=(i*137)%W,sy=(i*97+Date.now()*0.01)%H;ctx.fillRect(sx,sy,1,1);}
+    // Aliens
+    aliens.filter(a=>a.alive).forEach(a=>{drawAlien(a);});
+    // Ship
+    ctx.shadowBlur=16;ctx.shadowColor='#00e5ff';ctx.fillStyle='#00e5ff';
+    ctx.beginPath();ctx.moveTo(ship.x+ship.w/2,ship.y);ctx.lineTo(ship.x+ship.w,ship.y+ship.h);ctx.lineTo(ship.x,ship.y+ship.h);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#ffffff';ctx.fillRect(ship.x+ship.w/2-3,ship.y-8,6,10);
+    // Bullets
+    ctx.shadowBlur=8;ctx.shadowColor='#00ff41';ctx.fillStyle='#00ff41';
+    bullets.forEach(b=>ctx.fillRect(b.x-2,b.y,4,12));
+    ctx.shadowBlur=8;ctx.shadowColor='#ff2d78';ctx.fillStyle='#ff2d78';
+    alienBullets.forEach(b=>ctx.fillRect(b.x-2,b.y,4,10));
+    // HUD
+    ctx.shadowBlur=0;ctx.fillStyle='#00ff41';ctx.font='12px Share Tech Mono';ctx.textAlign='left';
+    ctx.fillText('PONTOS: '+score,10,20);
+    ctx.fillStyle='#ff2d78';ctx.textAlign='right';ctx.fillText('♥'.repeat(lives),W-10,20);
+    ctx.shadowBlur=0;
+  }
+
+  function update(){
+    if(!running)return;
+    // Move ship
+    if(keys['ArrowLeft']||keys['a'])ship.x=Math.max(0,ship.x-5);
+    if(keys['ArrowRight']||keys['d'])ship.x=Math.min(W-ship.w,ship.x+5);
+    // Shoot
+    if(shootCooldown>0)shootCooldown--;
+    if((keys[' ']||keys['ArrowUp'])&&shootCooldown===0){
+      bullets.push({x:ship.x+ship.w/2,y:ship.y});shootCooldown=20;sndShoot();
+    }
+    // Move bullets
+    bullets=bullets.filter(b=>{b.y-=10;return b.y>0;});
+    alienBullets=alienBullets.filter(b=>{b.y+=4;return b.y<H;});
+    // Move aliens
+    alienMoveTimer++;
+    const aliveAliens=aliens.filter(a=>a.alive);
+    if(aliveAliens.length===0){wave++;document.getElementById('invWave').textContent=wave;initAliens();alienMoveInterval=Math.max(200,800-wave*80);}
+    if(alienMoveTimer>alienMoveInterval/60*60){
+      alienMoveTimer=0;frameToggle=1-frameToggle;
+      let edgeHit=aliveAliens.some(a=>alienDir>0?a.x+AS>W-20:a.x<20);
+      if(edgeHit){aliens.forEach(a=>a.y+=16);alienDir*=-1;}
+      else{aliens.forEach(a=>{a.x+=alienDir*12;a.frame=frameToggle;});}
+    }
+    // Alien shoot
+    if(Math.random()<0.008*wave){
+      const bottom=[];
+      for(let c=0;c<ALIEN_COLS;c++){const col=aliens.filter(a=>a.alive&&a.col===c);if(col.length>0)bottom.push(col.sort((a,b)=>b.y-a.y)[0]);}
+      if(bottom.length>0){const shooter=bottom[Math.floor(Math.random()*bottom.length)];alienBullets.push({x:shooter.x+10,y:shooter.y+20});}
+    }
+    // Collision: bullets vs aliens
+    bullets.forEach(b=>{
+      aliens.forEach(a=>{if(a.alive&&b.x>a.x&&b.x<a.x+AS&&b.y>a.y&&b.y<a.y+AS){a.alive=false;score+=10*(a.row+1);b.y=-100;sndExplode();document.getElementById('invScore').textContent=score;}});
+    });
+    // Alien bullets vs ship
+    alienBullets.forEach(b=>{
+      if(b.x>ship.x&&b.x<ship.x+ship.w&&b.y>ship.y&&b.y<ship.y+ship.h){
+        b.y=H+100;lives--;sndDie();document.getElementById('invLives').textContent='♥'.repeat(Math.max(0,lives));
+        if(lives<=0){running=false;setTimeout(()=>{ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillRect(0,0,W,H);ctx.fillStyle='#ff2d78';ctx.font='bold 28px Orbitron';ctx.textAlign='center';ctx.fillText('GAME OVER',W/2,H/2-14);ctx.fillStyle='#00e5ff';ctx.font='14px Share Tech Mono';ctx.fillText('Pontuação: '+score,W/2,H/2+14);},100);}
+      }
+    });
+    // Aliens reach bottom
+    if(aliveAliens.some(a=>a.y+AS>ship.y-10)){running=false;}
+  }
+
+  document.onkeydown=e=>{keys[e.key]=true;if(e.code==='Space')e.preventDefault();};
+  document.onkeyup=e=>{keys[e.key]=false;};
+  document.getElementById('iL').onmousedown=()=>keys['ArrowLeft']=true;document.getElementById('iL').onmouseup=()=>keys['ArrowLeft']=false;
+  document.getElementById('iR').onmousedown=()=>keys['ArrowRight']=true;document.getElementById('iR').onmouseup=()=>keys['ArrowRight']=false;
+  document.getElementById('iFire').onmousedown=()=>keys[' ']=true;document.getElementById('iFire').onmouseup=()=>keys[' ']=false;
+  document.getElementById('iL').ontouchstart=(e)=>{e.preventDefault();keys['ArrowLeft']=true;};document.getElementById('iL').ontouchend=()=>keys['ArrowLeft']=false;
+  document.getElementById('iR').ontouchstart=(e)=>{e.preventDefault();keys['ArrowRight']=true;};document.getElementById('iR').ontouchend=()=>keys['ArrowRight']=false;
+  document.getElementById('iFire').ontouchstart=(e)=>{e.preventDefault();keys[' ']=true;};document.getElementById('iFire').ontouchend=()=>keys[' ']=false;
+
+  function loop(){update();draw();if(running)activeGames.invaders=requestAnimationFrame(loop);}
+  activeGames.invaders=requestAnimationFrame(loop);
+}
+
+// ===== MEMORY =====
+const MEM_EMOJIS=['🚀','🎮','💎','⚡','🔥','🌙','🎯','🏆'];
+let memFlipped=[],memMatched=0,memMoves=0,memTimer=0,memInterval,memLocked=false;
+function initMemory(){
+  clearInterval(window._memInterval);
+  const board=document.getElementById('memoryBoard');
+  board.innerHTML='';
+  memFlipped=[];memMatched=0;memMoves=0;memTimer=0;memLocked=false;
+  document.getElementById('memPairs').textContent='0/8';
+  document.getElementById('memMoves').textContent='0';
+  document.getElementById('memTime').textContent='0s';
+  // Shuffle
+  const cards=[...MEM_EMOJIS,...MEM_EMOJIS];
+  for(let i=cards.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]];}
+  cards.forEach((emoji,i)=>{
+    const card=document.createElement('div');card.className='mem-card';card.dataset.value=emoji;card.dataset.idx=i;
+    card.innerHTML=`<div class="mem-inner"><div class="mem-face mem-back"></div><div class="mem-face mem-front">${emoji}</div></div>`;
+    card.onclick=()=>flipCard(card);
+    board.appendChild(card);
+  });
+  window._memInterval=setInterval(()=>{memTimer++;document.getElementById('memTime').textContent=memTimer+'s';},1000);
+}
+function flipCard(card){
+  if(memLocked||card.classList.contains('flipped')||card.classList.contains('matched'))return;
+  card.classList.add('flipped');sndFlip();
+  memFlipped.push(card);
+  if(memFlipped.length===2){
+    memMoves++;document.getElementById('memMoves').textContent=memMoves;memLocked=true;
+    const[a,b]=memFlipped;
+    if(a.dataset.value===b.dataset.value){
+      a.classList.add('matched');b.classList.add('matched');
+      memMatched++;document.getElementById('memPairs').textContent=memMatched+'/8';
+      sndMatch();memFlipped=[];memLocked=false;
+      if(memMatched===8){clearInterval(window._memInterval);setTimeout(()=>alert(`🏆 Parabéns! ${memMoves} jogadas em ${memTimer}s!`),300);}
+    }else{
+      setTimeout(()=>{a.classList.remove('flipped');b.classList.remove('flipped');memFlipped=[];memLocked=false;},900);
+    }
+  }
+}
+
+// ===== DINO =====
+function startDino(){
+  document.getElementById('dinoOverlay').style.display='none';
+  const canvas=document.getElementById('dinoCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,GROUND=H-60;
+  let dino={x:80,y:GROUND-50,w:40,h:50,vy:0,jumping:false};
+  let obstacles=[],clouds=[],score=0,best=parseInt(localStorage.getItem('dinoBest')||0),running=true,speed=4,frameCount=0;
+  document.getElementById('dinoBest').textContent=best;
+  // Init clouds
+  for(let i=0;i<5;i++)clouds.push({x:Math.random()*W,y:30+Math.random()*60,w:50+Math.random()*50});
+  function jump(){if(!dino.jumping){dino.vy=-14;dino.jumping=true;sndJump();}}
+  function update(){
+    frameCount++;speed=4+score*0.002;
+    // Dino physics
+    dino.vy+=0.7;dino.y+=dino.vy;
+    if(dino.y>=GROUND-dino.h){dino.y=GROUND-dino.h;dino.vy=0;dino.jumping=false;}
+    // Clouds
+    clouds.forEach(c=>{c.x-=speed*0.3;if(c.x+c.w<0)c.x=W+20;});
+    // Obstacles
+    if(frameCount%Math.floor(Math.max(40,90-score*0.1))===0){
+      const h=30+Math.random()*40;obstacles.push({x:W+20,y:GROUND-h,w:20+Math.random()*20,h});}
+    obstacles=obstacles.filter(o=>{o.x-=speed;return o.x+o.w>-10;});
+    // Score
+    score++;document.getElementById('dinoScore').textContent=score;
+    // Collision
+    obstacles.forEach(o=>{
+      if(dino.x+8<o.x+o.w&&dino.x+dino.w-8>o.x&&dino.y+8<o.y+o.h&&dino.y+dino.h>o.y+8){
+        running=false;sndDie();if(score>best){best=score;localStorage.setItem('dinoBest',best);document.getElementById('dinoBest').textContent=best;}
+        // Game over
+        ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,W,H);
+        ctx.fillStyle='#ffffff';ctx.font='bold 22px Orbitron';ctx.textAlign='center';ctx.fillText('GAME OVER',W/2,H/2-12);
+        ctx.fillStyle='#00e5ff';ctx.font='14px Share Tech Mono';ctx.fillText('ESPAÇO ou toque para reiniciar',W/2,H/2+14);
+      }
+    });
+  }
+  function drawDino(){
+    const leg=frameCount%20<10?4:0,leg2=frameCount%20<10?0:4;
+    ctx.fillStyle='#ffffff';ctx.shadowBlur=8;ctx.shadowColor='#ffffff';
+    ctx.fillRect(dino.x+8,dino.y,24,24);// body
+    ctx.fillRect(dino.x+20,dino.y-12,16,14);// head
+    ctx.fillStyle='#03030a';ctx.fillRect(dino.x+30,dino.y-8,4,4);// eye
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect(dino.x+8,dino.y+24,10,18+leg);// leg1
+    ctx.fillRect(dino.x+20,dino.y+24,10,18+leg2);// leg2
+    ctx.fillRect(dino.x,dino.y+10,10,8);// tail
+    ctx.shadowBlur=0;
+  }
+  function draw(){
+    ctx.fillStyle='#03030a';ctx.fillRect(0,0,W,H);
+    // Sky gradient
+    const g=ctx.createLinearGradient(0,0,0,GROUND);g.addColorStop(0,'#05050f');g.addColorStop(1,'#0a0a18');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,GROUND);
+    // Clouds
+    ctx.fillStyle='rgba(255,255,255,0.06)';clouds.forEach(c=>ctx.fillRect(c.x,c.y,c.w,20));
+    // Ground
+    ctx.fillStyle='#1a2a1a';ctx.fillRect(0,GROUND,W,4);
+    ctx.fillStyle='rgba(0,255,65,0.1)';ctx.fillRect(0,GROUND,W,2);
+    // Obstacles - cacti
+    ctx.shadowBlur=6;ctx.shadowColor='#00ff41';ctx.fillStyle='#00aa33';
+    obstacles.forEach(o=>{
+      ctx.fillRect(o.x+o.w/2-4,o.y,8,o.h);// trunk
+      ctx.fillRect(o.x,o.y+o.h*0.3,o.w,8);// arm
+    });
+    ctx.shadowBlur=0;
+    drawDino();
+    // Score
+    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='14px Share Tech Mono';ctx.textAlign='right';ctx.fillText('DIST: '+score,W-16,24);
+  }
+  const K=(e)=>{if(e.code==='Space'||e.key==='ArrowUp'){e.preventDefault();if(!running)startDino();else jump();}};
+  document.onkeydown=K;
+  document.getElementById('dinoJump').onclick=()=>{if(!running)startDino();else jump();};
+  canvas.onclick=()=>{if(!running)startDino();else jump();};
+  function loop(){if(!running)return;update();draw();activeGames.dino=requestAnimationFrame(loop);}
+  activeGames.dino=requestAnimationFrame(loop);
+}
+
+// Init
+window.onload=()=>{
+  document.getElementById('snakeBest').textContent=String(parseInt(localStorage.getItem('snakeBest')||0)).padStart(3,'0');
+  document.getElementById('dinoBest').textContent=localStorage.getItem('dinoBest')||0;
+};
+</script>
+
+<!-- ===== PRIVACY POLICY PAGE ===== -->
+<div id="privacy" class="page">
+  <div class="ad-top"><div class="ad-slot ad-728"><!-- AdSense 728x90 --></div></div>
+  <div style="max-width:860px;margin:0 auto;padding:40px 24px 60px;">
+    <div style="margin-bottom:36px;">
+      <button class="back-btn" onclick="showPage('home')" style="margin-bottom:20px;">◀ VOLTAR</button>
+      <div style="font-size:11px;letter-spacing:5px;color:var(--nc);margin-bottom:10px;">// LEGAL · TRANSPARÊNCIA</div>
+      <h1 style="font-family:'Orbitron',sans-serif;font-size:clamp(22px,5vw,36px);font-weight:900;color:var(--nw);margin-bottom:12px;">POLÍTICA DE <span style="color:var(--ng);">PRIVACIDADE</span></h1>
+      <p style="font-size:12px;color:#4a6a4a;letter-spacing:1px;">Última atualização: <span style="color:var(--nc);">Janeiro de 2025</span> &nbsp;·&nbsp; GAMELAB</p>
+    </div>
+    <div style="background:#0a1a0a;border:1px solid var(--ng);border-left:4px solid var(--ng);padding:18px 20px;margin-bottom:28px;">
+      <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ng);margin-bottom:8px;letter-spacing:2px;">⚠ AVISO SOBRE PUBLICIDADE</div>
+      <p style="font-size:12px;color:#8ab88a;line-height:1.8;">Este site utiliza o <strong style="color:var(--nw);">Google AdSense</strong> para exibir anúncios. O Google pode usar cookies para personalizar anúncios com base nas suas visitas. Você pode optar por não receber anúncios personalizados em <a href="https://www.google.com/settings/ads" target="_blank" style="color:var(--nc);">google.com/settings/ads</a>.</p>
+    </div>
+    <style>
+      .ps{background:var(--bg2);border:1px solid #1a2a1a;padding:22px 26px;margin-bottom:14px;}
+      .ps h2{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--nc);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #0d1d0d;letter-spacing:2px;}
+      .ps p,.ps li{font-size:12px;color:#6a8a6a;line-height:1.9;margin-bottom:8px;}
+      .ps ul{padding-left:18px;}
+      .ps li{margin-bottom:5px;}
+      .ps strong{color:#8ab88a;}
+      .ps a{color:var(--nc);text-decoration:none;}
+      .ps a:hover{text-decoration:underline;}
+      .ph{background:#041a04;border-left:3px solid var(--ng);padding:10px 14px;margin:10px 0;font-size:12px;color:#8ab88a;line-height:1.7;}
+    </style>
+    <div class="ps"><h2>1. INTRODUÇÃO E IDENTIFICAÇÃO</h2>
+      <p>Bem-vindo ao <strong>GAMELAB</strong>. Esta Política de Privacidade descreve como coletamos, usamos e protegemos suas informações ao acessar nosso site de jogos online.</p>
+      <p>Ao utilizar o GAMELAB, você concorda com as práticas descritas nesta política. <strong>Contato:</strong> <a href="mailto:contato@gamelab.com.br">contato@gamelab.com.br</a></p>
+    </div>
+    <div class="ps"><h2>2. DADOS QUE COLETAMOS</h2>
+      <ul>
+        <li><strong>Dados de uso:</strong> páginas visitadas, tempo de sessão, jogos acessados e pontuações (salvas localmente no seu dispositivo via <em>localStorage</em>).</li>
+        <li><strong>Dados técnicos:</strong> endereço IP, tipo de navegador, sistema operacional — coletados automaticamente pelo servidor e Google Analytics.</li>
+        <li><strong>Cookies de publicidade:</strong> o Google AdSense usa cookies para exibir anúncios relevantes ao seu perfil de navegação.</li>
+        <li><strong>Dados de interação:</strong> cliques em anúncios e tempo de visualização, coletados pelo Google para fins publicitários.</li>
+      </ul>
+      <div class="ph">ℹ️ O GAMELAB <strong>não coleta</strong> nome, e-mail, telefone ou qualquer dado pessoal diretamente identificável sem seu consentimento explícito.</div>
+    </div>
+    <div class="ps"><h2>3. COMO UTILIZAMOS SUAS INFORMAÇÕES</h2>
+      <ul>
+        <li>Melhorar a experiência dos jogos e do site;</li>
+        <li>Analisar tráfego e comportamento dos usuários (Google Analytics);</li>
+        <li>Exibir anúncios relevantes através do Google AdSense;</li>
+        <li>Garantir a segurança e o funcionamento correto do site;</li>
+        <li>Cumprir obrigações legais quando necessário.</li>
+      </ul>
+    </div>
+    <div class="ps"><h2>4. GOOGLE ADSENSE E COOKIES</h2>
+      <p>Este site é parceiro do <strong>Google AdSense</strong>. O AdSense utiliza cookies <em>DART</em> para exibir anúncios personalizados com base nas suas visitas a este e outros sites.</p>
+      <ul>
+        <li>Os cookies do Google são definidos pelo domínio <strong>google.com</strong>;</li>
+        <li>O Google pode usar informações sobre suas visitas para exibir anúncios de seu interesse;</li>
+        <li>Empresas parceiras podem usar cookies e web beacons para medir eficácia dos anúncios.</li>
+      </ul>
+      <div class="ph">🔧 <strong>Desativar anúncios personalizados:</strong><br>
+        Acesse <a href="https://www.google.com/settings/ads" target="_blank">google.com/settings/ads</a> ou <a href="https://optout.aboutads.info/" target="_blank">optout.aboutads.info</a><br>
+        Mais info: <a href="https://policies.google.com/technologies/partner-sites" target="_blank">policies.google.com/technologies/partner-sites</a>
+      </div>
+    </div>
+    <div class="ps"><h2>5. ARMAZENAMENTO LOCAL (localStorage)</h2>
+      <p>Usamos o <strong>localStorage</strong> do navegador para salvar recordes dos jogos. Esses dados ficam <strong>apenas no seu dispositivo</strong>, nunca são enviados a servidores e podem ser apagados limpando os dados do navegador.</p>
+    </div>
+    <div class="ps"><h2>6. SEUS DIREITOS — LGPD (Lei 13.709/2018)</h2>
+      <ul>
+        <li><strong>Acesso:</strong> solicitar acesso aos dados que possuímos sobre você;</li>
+        <li><strong>Correção:</strong> corrigir dados incompletos ou desatualizados;</li>
+        <li><strong>Exclusão:</strong> solicitar remoção de dados desnecessários;</li>
+        <li><strong>Portabilidade:</strong> solicitar transferência dos seus dados;</li>
+        <li><strong>Revogação:</strong> retirar consentimento dado anteriormente;</li>
+        <li><strong>Oposição:</strong> se opor a tratamentos realizados sem consentimento.</li>
+      </ul>
+      <p>Para exercer esses direitos: <a href="mailto:privacidade@gamelab.com.br">privacidade@gamelab.com.br</a></p>
+    </div>
+    <div class="ps"><h2>7. CRIANÇAS E ADOLESCENTES</h2>
+      <p>O GAMELAB é destinado ao <strong>público geral</strong>. Não coletamos dados de menores de 13 anos sem consentimento dos responsáveis. Se acredita que coletamos dados de uma criança sem autorização, entre em contato imediatamente.</p>
+      <div class="ph">⚠️ Para acesso por menores, recomendamos supervisão dos responsáveis.</div>
+    </div>
+    <div class="ps"><h2>8. LINKS EXTERNOS E ANÚNCIOS</h2>
+      <p>Anúncios podem conter links para sites de terceiros. Não somos responsáveis pelas práticas de privacidade desses sites. Recomendamos ler a política de privacidade de qualquer site acessado via anúncios.</p>
+    </div>
+    <div class="ps"><h2>9. ALTERAÇÕES NESTA POLÍTICA</h2>
+      <p>Podemos atualizar esta política periodicamente. Ao fazer isso, revisaremos a data de "última atualização" no topo desta página. Recomendamos revisá-la regularmente.</p>
+    </div>
+    <div class="ps"><h2>10. CONTATO</h2>
+      <ul>
+        <li><strong>E-mail geral:</strong> <a href="mailto:contato@gamelab.com.br">contato@gamelab.com.br</a></li>
+        <li><strong>Privacidade (DPO):</strong> <a href="mailto:privacidade@gamelab.com.br">privacidade@gamelab.com.br</a></li>
+        <li><strong>Tempo de resposta:</strong> até 15 dias úteis</li>
+      </ul>
+      <p style="margin-top:12px;font-size:11px;color:#3a5a3a;">Em conformidade com a <strong style="color:#6a8a6a;">LGPD (Lei 13.709/2018)</strong>, o <strong style="color:#6a8a6a;">GDPR europeu</strong> e as políticas do <strong style="color:#6a8a6a;">Google AdSense</strong>.</p>
+    </div>
+    <div style="background:#030a03;border:1px solid #0d2a0d;padding:18px 22px;margin-top:6px;">
+      <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ng);margin-bottom:12px;letter-spacing:2px;">🔗 LINKS ÚTEIS</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <a href="https://policies.google.com/privacy" target="_blank" style="font-size:11px;color:var(--nc);border:1px solid #0d2a2a;padding:6px 12px;text-decoration:none;letter-spacing:1px;">Política Google</a>
+        <a href="https://www.google.com/settings/ads" target="_blank" style="font-size:11px;color:var(--nc);border:1px solid #0d2a2a;padding:6px 12px;text-decoration:none;letter-spacing:1px;">Gerenciar Anúncios</a>
+        <a href="https://optout.aboutads.info/" target="_blank" style="font-size:11px;color:var(--nc);border:1px solid #0d2a2a;padding:6px 12px;text-decoration:none;letter-spacing:1px;">Desativar Cookies</a>
+        <a href="https://support.google.com/adsense/answer/1348695" target="_blank" style="font-size:11px;color:var(--nc);border:1px solid #0d2a2a;padding:6px 12px;text-decoration:none;letter-spacing:1px;">AdSense e Privacidade</a>
+        <a href="https://www.gov.br/anpd" target="_blank" style="font-size:11px;color:var(--nc);border:1px solid #0d2a2a;padding:6px 12px;text-decoration:none;letter-spacing:1px;">ANPD Brasil</a>
+      </div>
+    </div>
+  </div>
+  <footer style="text-align:center;padding:28px 20px;border-top:1px solid #00ff4110;font-size:11px;color:#2a4a2a;letter-spacing:2px;position:relative;z-index:10;">
+    GAME<span style="color:var(--nw)">LAB</span> · Política de Privacidade · LGPD · Google AdSense
+  </footer>
+</div>
+
+</body>
+</html>
